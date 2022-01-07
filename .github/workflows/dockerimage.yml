@@ -17,7 +17,7 @@ jobs:
         id: prep
         run: |
           TAG="latest"
-          IMAGE="index.docker.io/${{ secrets.DOCKER_HUB_USERNAME }}/${{ secrets.DOCKER_HUB_REPOSITORY }}"
+          IMAGE="${{ secrets.DOCKER_HUB_USERNAME }}/${{ secrets.DOCKER_HUB_REPOSITORY }}"
           echo ::set-output name=tagged_image::${IMAGE}:${TAG}
           echo ::set-output name=tag::${TAG}
       - name: Set up Docker Buildx
@@ -46,8 +46,9 @@ jobs:
           builder: ${{ steps.buildx.outputs.name }}
           file: Dockerfile
           push: true
-          registry: index.docker.io
-          tags: ${{ steps.prep.outputs.tagged_image }}
+          tags: |
+            indydevguy/symfosys-cms-official:latest
+            ghcr.io/indydevguy/symfosys-cms-official:latest
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
 
