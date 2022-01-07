@@ -16,7 +16,7 @@ jobs:
       - name: Prepare
         id: prep
         run: |
-          TAG=$(echo $GITHUB_SHA | head -c7)
+          TAG="latest"
           IMAGE="https://hub.docker.com/repository/docker/indydevguy/symfosys-cms-official"
           echo ::set-output name=tagged_image::${IMAGE}:${TAG}
           echo ::set-output name=tag::${TAG}
