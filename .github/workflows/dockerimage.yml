@@ -17,7 +17,7 @@ jobs:
         id: prep
         run: |
           TAG="latest"
-          IMAGE="https://hub.docker.com/repository/docker/indydevguy/symfosys-cms-official"
+          IMAGE="indydevguy/symfosys-cms-official"
           echo ::set-output name=tagged_image::${IMAGE}:${TAG}
           echo ::set-output name=tag::${TAG}
       - name: Set up Docker Buildx
