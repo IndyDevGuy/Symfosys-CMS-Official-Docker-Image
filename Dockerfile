@@ -221,6 +221,12 @@ RUN apk update && apk upgrade &&\
 #    apk del .sys-deps
 #    ln -s /usr/bin/php7 /usr/bin/php
 
+RUN apk add --update --no-cache --virtual .build-dependencies $PHPIZE_DEPS \
+    && pecl install apcu \
+    && docker-php-ext-enable apcu \
+    && pecl clear-cache \
+    && apk del .build-dependencies
+
 ADD conf/supervisord.conf /etc/supervisord.conf
 
 # Copy our nginx config
