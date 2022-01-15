@@ -1,4 +1,4 @@
-FROM php:8.1-fpm
+FROM php:8.1.0alpha3-fpm-alpine
 
 LABEL maintainer="IndyDevGuy <contact@indydevguy.com>"
 
