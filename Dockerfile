@@ -201,7 +201,7 @@ RUN apk update && apk upgrade &&\
       --with-freetype \
       --with-jpeg && \
     #curl iconv session
-    docker-php-ext-install pdo_mysql pdo_sqlite mysqli opcache gd && \
+    docker-php-ext-install pdo_mysql pdo_sqlite mysqli opcache gd zip json dom soap && \
     #docker-php-ext-install iconv pdo_mysql pdo_sqlite pgsql pdo_pgsql mysqli gd exif intl xsl json soap dom zip opcache && \
     #pecl install xdebug-2.9.2 && \
     pecl install -o -f redis && \
