@@ -257,6 +257,9 @@ else
   echo "Installing bundled assets..."
   php bin/console assets:install public
 
+  echo "Installing theme assets..."
+  php bin/console idg_theme:theme:assets:install
+
   echo "Clearing Symfony cache..."
   php bin/console cache:clear
   
