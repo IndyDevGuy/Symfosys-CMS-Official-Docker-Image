@@ -262,6 +262,17 @@ else
 
   echo "Clearing Symfony cache..."
   php bin/console cache:clear
+
+  if [ -n "$YARN" ]; then
+      echo "Running yarn install..."
+      yarn install
+      echo "Running Webpack..."
+      yarn encore dev
+    else
+      echo "Skipping yarn installation and webpack"
+    fi
+
+    echo "Symfony Initialization finished!"
   
 fi
 

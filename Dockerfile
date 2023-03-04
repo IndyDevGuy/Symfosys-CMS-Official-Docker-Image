@@ -23,6 +23,7 @@ RUN echo @testing https://dl-cdn.alpinelinux.org/alpine/edge/testing >> /etc/apk
     echo /etc/apk/respositories && \
     apk update && apk upgrade &&\
     apk add --no-cache \
+    yarn \
     bash \
     openssh-client \
     wget \
