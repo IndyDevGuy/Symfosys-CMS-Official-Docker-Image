@@ -245,8 +245,8 @@ else
 
   cd /var/www/html/src || return
 
-  echo "creating .env file with your information.."
-  printf "APP_ENV=%s\n APP_SECRET=%s\n DATABASE_URL=mysql://%s:%s@%s:3306/%s?serverVersion=5.7" "$APPLICATION_ENV" "$APPLICATION_SECRET" "$DB_USERNAME" "$DB_PASSWORD" "$DB_HOST" "$DB_DATABASE" > /var/www/html/src/.env
+  #echo "creating .env file with your information.."
+  #printf "APP_ENV=%s\n APP_SECRET=%s\n DATABASE_URL=mysql://%s:%s@%s:3306/%s?serverVersion=5.7" "$APPLICATION_ENV" "$APPLICATION_SECRET" "$DB_USERNAME" "$DB_PASSWORD" "$DB_HOST" "$DB_DATABASE" > /var/www/html/src/.env
 
   echo "Updating database..."
   php bin/console doctrine:schema:update --force
