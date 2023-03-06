@@ -134,7 +134,7 @@ if [ -f /etc/nginx/sites-available/default-ssl.conf ]; then
 fi
 
 # Set the desired timezone
-echo "date.timezone=$(cat /etc/TZ)" > /usr/local/etc/php/conf.d/timezone.ini
+#echo "date.timezone=$(cat /etc/TZ)" > /usr/local/etc/php/conf.d/timezone.ini
 
 # Display errors in docker logs
 if [ -n "$PHP_ERRORS_STDERR" ]; then
@@ -231,17 +231,17 @@ else
     composer install --working-dir=/var/www/html/src
   fi
 
-  echo "Patching Eko/FeedBundle... making vendor/eko/feedbundle/Resources/config/command.xml"
+  #echo "Patching Eko/FeedBundle... making vendor/eko/feedbundle/Resources/config/command.xml"
 
-  echo "Creating folders for Eko/FeedBundle"
-  mkdir -p /var/www/html/src/vendor/eko/feedbundle/Resources/config
+  #echo "Creating folders for Eko/FeedBundle"
+  #mkdir -p /var/www/html/src/vendor/eko/feedbundle/Resources/config
 
-  touch /var/www/html/src/vendor/eko/feedbundle/Resources/config/command.xml
+  #touch /var/www/html/src/vendor/eko/feedbundle/Resources/config/command.xml
 
-  if [ -e "/var/www/html/src/vendor/eko/feedbundle/Resources/config/command.xml" ]; then
-    echo "created command.xml for Eko/FeedBundle..."
-    printf '<?xml version="1.0" ?>\n <container xmlns="http://symfony.com/schema/dic/services" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">\n <services>\n </services>\n </container>' > /var/www/html/src/vendor/eko/feedbundle/Resources/config/command.xml
-  fi
+  #if [ -e "/var/www/html/src/vendor/eko/feedbundle/Resources/config/command.xml" ]; then
+  #  echo "created command.xml for Eko/FeedBundle..."
+  #  printf '<?xml version="1.0" ?>\n <container xmlns="http://symfony.com/schema/dic/services" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">\n <services>\n </services>\n </container>' > /var/www/html/src/vendor/eko/feedbundle/Resources/config/command.xml
+  #fi
 
   cd /var/www/html/src || return
 
