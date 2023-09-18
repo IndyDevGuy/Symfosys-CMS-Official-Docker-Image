@@ -32,3 +32,5 @@ echo "Clearing Symfony cache..."
 php bin/console cache:clear
 
 chown -Rf nginx:nginx ${WEBROOT}
+
+exit
