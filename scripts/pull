@@ -18,8 +18,8 @@ if [ -f "${COMPOSERROOT}/composer.lock" ]; then
   composer install --working-dir=${COMPOSERROOT}
 fi
 
-echo "updating .env file with your information.."
-printf "APP_ENV=%s\n APP_SECRET=%s\n DATABASE_URL=mysql://%s:%s@%s:3306/%s?serverVersion=5.7" "$APPLICATION_ENV" "$APPLICATION_SECRET" "$DB_USERNAME" "$DB_PASSWORD" "$DB_HOST" "$DB_DATABASE" > /var/www/html/src/.env
+#echo "updating .env file with your information.."
+#printf "APP_ENV=%s\n APP_SECRET=%s\n DATABASE_URL=mysql://%s:%s@%s:3306/%s?serverVersion=5.7" "$APPLICATION_ENV" "$APPLICATION_SECRET" "$DB_USERNAME" "$DB_PASSWORD" "$DB_HOST" "$DB_DATABASE" > /var/www/html/src/.env
 
 cd ${COMPOSERROOT}
 echo "Updating database..."
