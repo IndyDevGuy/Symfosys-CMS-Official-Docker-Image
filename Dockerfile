@@ -68,6 +68,8 @@ RUN apk add --no-cache --virtual .sys-deps \
     docker-php-ext-install pdo_mysql mysqli pdo_sqlite pgsql pdo_pgsql exif intl xsl soap zip && \
     pecl install -o -f xdebug && \
     pecl install -o -f redis && \
+    pecl install -o -f apcu \
+    && docker-php-ext-enable apcu && \
     echo "extension=redis.so" > /usr/local/etc/php/conf.d/redis.ini && \
     echo "zend_extension=xdebug" > /usr/local/etc/php/conf.d/xdebug.ini && \
     docker-php-source delete && \
