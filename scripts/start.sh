@@ -228,7 +228,7 @@ else
   echo "Checking for composer.json file..."
   if [ -f "/var/www/html/src/composer.json" ]; then
     echo "Found composer.json file, calling composer install"
-    composer install --working-dir=/var/www/html/src
+    composer install --working-dir=/var/www/html/src --ignore-platform-reqs
   fi
 
   #echo "Patching Eko/FeedBundle... making vendor/eko/feedbundle/Resources/config/command.xml"
