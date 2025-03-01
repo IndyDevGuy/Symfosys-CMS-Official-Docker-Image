@@ -207,19 +207,6 @@ else
   fi
 fi
 
-# Run custom scripts
-if [[ "$RUN_SCRIPTS" == "1" ]] ; then
-  if [ -d "/var/www/html/scripts/" ]; then
-    # make scripts executable in case they aren't
-    chmod -Rf 750 /var/www/html/scripts/*; sync;
-    # run scripts in number order
-    # shellcheck disable=SC2045
-    for i in $(ls /var/www/html/scripts/); do /var/www/html/scripts/"$i" ; done
-  else
-    echo "Can't find script directory"
-  fi
-fi
-
 if [ -d "/var/www/html/src/vendor/" ]; then
   echo "composer dependencies already installed, skipping installation.."
 else
@@ -273,9 +260,21 @@ else
     fi
 
     echo "Symfony Initialization finished!"
-  
+
 fi
 
+# Run custom scripts
+if [[ "$RUN_SCRIPTS" == "1" ]] ; then
+  if [ -d "/var/www/html/scripts/" ]; then
+    # make scripts executable in case they aren't
+    chmod -Rf 750 /var/www/html/scripts/*; sync;
+    # run scripts in number order
+    # shellcheck disable=SC2045
+    for i in $(ls /var/www/html/scripts/); do /var/www/html/scripts/"$i" ; done
+  else
+    echo "Can't find script directory"
+  fi
+fi
 
 # Start supervisord and service
 exec /usr/bin/supervisord -n -c /etc/supervisord.conf
