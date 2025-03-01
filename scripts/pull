@@ -15,7 +15,7 @@ git pull || exit 1
 
 # Try auto install for composer
 if [ -f "${COMPOSERROOT}/composer.lock" ]; then
-  composer install --working-dir=${COMPOSERROOT}
+  composer install --working-dir=${COMPOSERROOT} --ignore-platform-reqs
 fi
 
 #echo "updating .env file with your information.."
