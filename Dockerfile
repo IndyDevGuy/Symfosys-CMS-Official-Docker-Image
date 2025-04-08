@@ -47,30 +47,28 @@ RUN echo @testing https://dl-cdn.alpinelinux.org/alpine/edge/testing >> /etc/apk
     libxslt-dev \
     gcc
 
-RUN apk add --no-cache --virtual .sys-deps \
-    musl-dev \
-    linux-headers \
-    augeas-dev \
-    libmcrypt-dev \
-    python3-dev \
-    libffi-dev \
-    sqlite-dev \
-    imap-dev \
-    postgresql-dev \
-    lua-resty-core && \
+RUN apk add --no-cache --virtual .sys-deps musl-dev linux-headers augeas-dev libmcrypt-dev python3-dev libffi-dev sqlite-dev imap-dev postgresql-dev lua-resty-core
   # Install PHP modules
-    docker-php-ext-configure gd \
-      --enable-gd \
-      --with-freetype \
-      --with-jpeg && \
-    docker-php-ext-install gd && \
-     pip install --upgrade pip && \
-    docker-php-ext-install pdo_mysql mysqli pdo_sqlite pgsql pdo_pgsql exif intl xsl soap zip tidy && \
+RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg \
+RUN docker-php-ext-install gd
+RUN docker-php-ext-install tidy
+RUN     pip install --upgrade pip && \
+    docker-php-ext-install pdo_mysql && \
+    docker-php-ext-install mysqli && \
+    docker-php-ext-install pdo_sqlite && \
+    docker-php-ext-install pgsql && \
+    docker-php-ext-install pdo_pgsql && \
+    docker-php-ext-install exif && \
+    docker-php-ext-install intl && \
+    docker-php-ext-install xsl && \
+    docker-php-ext-install soap && \
+    docker-php-ext-install zip && \
     pecl install -o -f xdebug && \
     pecl install -o -f redis && \
-    pecl install -o -f apcu \
-    && docker-php-ext-enable apcu && \
-    echo "extension=redis.so" > /usr/local/etc/php/conf.d/redis.ini && \
+    pecl install -o -f apcu && \
+    docker-php-ext-enable apcu
+RUN docker-php-ext-enable tidy
+RUN echo "extension=redis.so" > /usr/local/etc/php/conf.d/redis.ini && \
     echo "zend_extension=xdebug" > /usr/local/etc/php/conf.d/xdebug.ini && \
     docker-php-source delete && \
     mkdir -p /var/www/app && \
