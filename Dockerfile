@@ -51,7 +51,18 @@ RUN apk add --no-cache --virtual .sys-deps musl-dev linux-headers augeas-dev lib
   # Install PHP modules
 RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg
 RUN docker-php-ext-install gd
-RUN docker-php-ext-install tidy
+## Install Tidy
+ENV TIDY_VERSION=5.6.0
+RUN set -x \
+    && mkdir -p /usr/local/src \
+    && cd /usr/local/src \
+    && curl -q https://codeload.github.com/htacg/tidy-html5/tar.gz/$TIDY_VERSION | tar -xz \
+    && cd tidy-html5-$TIDY_VERSION/build/cmake \
+    && cmake ../.. && make install \
+    && ln -s tidybuffio.h ../../../../include/buffio.h \
+    && cd /usr/local/src \
+    && rm -rf /usr/local/src/tidy-html5-$TIDY_VERSION
+RUN docker-php-ext-install -j$(nproc) tidy
 RUN pip install --upgrade pip && \
     docker-php-ext-install pdo_mysql && \
     docker-php-ext-install mysqli && \
