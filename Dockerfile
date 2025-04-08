@@ -49,7 +49,7 @@ RUN echo @testing https://dl-cdn.alpinelinux.org/alpine/edge/testing >> /etc/apk
 
 RUN apk add --no-cache --virtual .sys-deps musl-dev linux-headers augeas-dev libmcrypt-dev python3-dev libffi-dev sqlite-dev imap-dev postgresql-dev lua-resty-core
   # Install PHP modules
-RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg \
+RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg
 RUN docker-php-ext-install gd
 RUN docker-php-ext-install tidy
 RUN     pip install --upgrade pip && \
