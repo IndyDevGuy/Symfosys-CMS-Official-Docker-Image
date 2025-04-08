@@ -52,7 +52,7 @@ RUN apk add --no-cache --virtual .sys-deps musl-dev linux-headers augeas-dev lib
 RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg
 RUN docker-php-ext-install gd
 RUN docker-php-ext-install tidy
-RUN     pip install --upgrade pip && \
+RUN pip install --upgrade pip && \
     docker-php-ext-install pdo_mysql && \
     docker-php-ext-install mysqli && \
     docker-php-ext-install pdo_sqlite && \
