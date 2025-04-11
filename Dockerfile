@@ -22,7 +22,8 @@ RUN apk add --no-cache nginx \
     g++ \
     make \
     cmake \
-    git
+    git \
+    docker-cli
 
 RUN echo @testing https://dl-cdn.alpinelinux.org/alpine/edge/testing >> /etc/apk/repositories && \
     echo /etc/apk/respositories && \
