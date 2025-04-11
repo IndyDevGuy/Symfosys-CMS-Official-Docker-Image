@@ -25,6 +25,8 @@ RUN apk add --no-cache nginx \
     git \
     docker-cli
 
+RUN addgroup -g 999 docker && addgroup www-data docker
+
 RUN echo @testing https://dl-cdn.alpinelinux.org/alpine/edge/testing >> /etc/apk/repositories && \
     echo /etc/apk/respositories && \
     apk update && apk upgrade &&\
