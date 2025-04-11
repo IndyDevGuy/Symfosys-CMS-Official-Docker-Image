@@ -25,9 +25,7 @@ RUN apk add --no-cache nginx \
     git \
     docker-cli
 
-RUN sock_gid=$(stat -c '%g' /var/run/docker.sock) && \
-    sock_group=$(getent group "$sock_gid" | cut -d: -f1) && \
-    addgroup www-data "$sock_group"
+RUN addgroup www-data ping
 
 RUN echo @testing https://dl-cdn.alpinelinux.org/alpine/edge/testing >> /etc/apk/repositories && \
     echo /etc/apk/respositories && \
