@@ -207,19 +207,6 @@ else
   fi
 fi
 
-# Run custom scripts
-if [[ "$RUN_SCRIPTS" == "1" ]] ; then
-  if [ -d "/var/www/html/scripts/" ]; then
-    # make scripts executable in case they aren't
-    chmod -Rf 750 /var/www/html/scripts/*; sync;
-    # run scripts in number order
-    # shellcheck disable=SC2045
-    for i in $(ls /var/www/html/scripts/); do /var/www/html/scripts/"$i" ; done
-  else
-    echo "Can't find script directory"
-  fi
-fi
-
 if [ -d "/var/www/html/src/vendor/" ]; then
   echo "composer dependencies already installed, skipping installation.."
 else
@@ -231,22 +218,7 @@ else
     composer install --working-dir=/var/www/html/src --ignore-platform-reqs
   fi
 
-  #echo "Patching Eko/FeedBundle... making vendor/eko/feedbundle/Resources/config/command.xml"
-
-  #echo "Creating folders for Eko/FeedBundle"
-  #mkdir -p /var/www/html/src/vendor/eko/feedbundle/Resources/config
-
-  #touch /var/www/html/src/vendor/eko/feedbundle/Resources/config/command.xml
-
-  #if [ -e "/var/www/html/src/vendor/eko/feedbundle/Resources/config/command.xml" ]; then
-  #  echo "created command.xml for Eko/FeedBundle..."
-  #  printf '<?xml version="1.0" ?>\n <container xmlns="http://symfony.com/schema/dic/services" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">\n <services>\n </services>\n </container>' > /var/www/html/src/vendor/eko/feedbundle/Resources/config/command.xml
-  #fi
-
   cd /var/www/html/src || return
-
-  #echo "creating .env file with your information.."
-  #printf "APP_ENV=%s\n APP_SECRET=%s\n DATABASE_URL=mysql://%s:%s@%s:3306/%s?serverVersion=5.7" "$APPLICATION_ENV" "$APPLICATION_SECRET" "$DB_USERNAME" "$DB_PASSWORD" "$DB_HOST" "$DB_DATABASE" > /var/www/html/src/.env
 
   echo "Updating database..."
   php bin/console doctrine:schema:update --force
@@ -274,6 +246,20 @@ else
 
     echo "Symfony Initialization finished!"
 
+fi
+
+# Run custom scripts
+if [[ "$RUN_SCRIPTS" == "1" ]] ; then
+  echo "Running custom scripts.."
+  if [ -d "/var/www/html/scripts/" ]; then
+    # make scripts executable in case they aren't
+    chmod -Rf 750 /var/www/html/scripts/*; sync;
+    # run scripts in number order
+    # shellcheck disable=SC2045
+    for i in $(ls /var/www/html/scripts/); do /var/www/html/scripts/"$i" ; done
+  else
+    echo "Can't find script directory"
+  fi
 fi
 
 
