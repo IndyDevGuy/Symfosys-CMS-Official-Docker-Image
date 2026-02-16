@@ -256,26 +256,9 @@ SUPERVISOR_OVERRIDE_CONF="${SUPERVISOR_OVERRIDE_CONF:-/var/www/html/conf/supervi
 # --- Replace supervisord.conf if override exists ---
 if [[ -f "${SUPERVISOR_OVERRIDE_CONF}" ]] && [[ -s "${SUPERVISOR_OVERRIDE_CONF}" ]]; then
   echo "Found supervisor override: ${SUPERVISOR_OVERRIDE_CONF}"
+  # Copy extra config
+  cp -f "${SUPERVISOR_OVERRIDE_CONF}" "${SUPERVISOR_DEFAULT_CONF}"
 
-  # Validate config before applying (prevents bricking the container)
-  # Note: supervisord uses -c to pick config; -t tests it.
-  if /usr/bin/supervisord -c "${SUPERVISOR_OVERRIDE_CONF}" -t >/dev/null 2>&1; then
-    echo "Supervisor override config validated OK."
-
-    # Backup existing config (one-time-ish)
-    if [[ -f "${SUPERVISOR_DEFAULT_CONF}" ]] && [[ ! -f "${SUPERVISOR_DEFAULT_CONF}.bak" ]]; then
-      cp -f "${SUPERVISOR_DEFAULT_CONF}" "${SUPERVISOR_DEFAULT_CONF}.bak"
-    fi
-
-    # Apply override (copy)
-    cp -f "${SUPERVISOR_OVERRIDE_CONF}" "${SUPERVISOR_DEFAULT_CONF}"
-
-    # If you prefer symlink instead of copy, replace the cp line with:
-    # ln -sf "${SUPERVISOR_OVERRIDE_CONF}" "${SUPERVISOR_DEFAULT_CONF}"
-  else
-    echo "ERROR: Supervisor override config failed validation. Using default: ${SUPERVISOR_DEFAULT_CONF}"
-    /usr/bin/supervisord -c "${SUPERVISOR_OVERRIDE_CONF}" -t || true
-  fi
 else
   echo "No supervisor override found at ${SUPERVISOR_OVERRIDE_CONF}; using default ${SUPERVISOR_DEFAULT_CONF}"
 fi
