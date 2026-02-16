@@ -149,7 +149,9 @@ RUN echo "cgi.fix_pathinfo=0" > ${php_vars} \
  && mkdir -p /var/run \
  && chown -R nginx:nginx /var/run \
  && cp /usr/local/etc/php/php.ini-development /usr/local/etc/php/php.ini \
- && sed -i -e "s/;opcache/opcache/g" /usr/local/etc/php/php.ini
+ && sed -i -e "s/;opcache/opcache/g" /usr/local/etc/php/php.ini \
+ && mkdir /etc/supervisor \
+ && mkdir /etc/supervisor/conf.d
 
 # Scripts
 ADD scripts/start.sh /start.sh
