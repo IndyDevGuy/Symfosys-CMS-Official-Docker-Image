@@ -285,7 +285,7 @@ if [[ "${SUPERVISOR_ALLOW_OVERRIDE}" == "1" ]]; then
   else
     echo "No supervisor override found at ${SUPERVISOR_OVERRIDE_CONF}; using default ${SUPERVISOR_DEFAULT_CONF}"
   fi
-
+fi
 # Run custom scripts
 if [[ "$RUN_SCRIPTS" == "1" ]] ; then
   echo "Running custom scripts.."
