@@ -248,15 +248,13 @@ else
 
 fi
 
-set -euo pipefail
-
 SUPERVISOR_DEFAULT_CONF="/etc/supervisor/conf.d/extra.conf"
 
 # You can override this via env var in docker-compose/stack
 SUPERVISOR_OVERRIDE_CONF="${SUPERVISOR_OVERRIDE_CONF:-/var/www/html/conf/supervisor/supervisord.conf}"
 
 # Optional: allow disabling override logic
-SUPERVISOR_ALLOW_OVERRIDE="${SUPERVISOR_ALLOW_OVERRIDE:-1}"
+SUPERVISOR_ALLOW_OVERRIDE="${SUPERVISOR_ALLOW_OVERRIDE:1}"
 
 # --- Replace supervisord.conf if override exists ---
 if [[ "${SUPERVISOR_ALLOW_OVERRIDE}" == "1" ]]; then
@@ -286,6 +284,7 @@ if [[ "${SUPERVISOR_ALLOW_OVERRIDE}" == "1" ]]; then
     echo "No supervisor override found at ${SUPERVISOR_OVERRIDE_CONF}; using default ${SUPERVISOR_DEFAULT_CONF}"
   fi
 fi
+
 # Run custom scripts
 if [[ "$RUN_SCRIPTS" == "1" ]] ; then
   echo "Running custom scripts.."
