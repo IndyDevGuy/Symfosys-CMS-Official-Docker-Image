@@ -1,166 +1,175 @@
-FROM php:8.2.3-fpm-alpine3.17
-
-LABEL maintainer="Trey Ellis <contact@indydevguy.com>"
-
-ENV php_conf /usr/local/etc/php-fpm.conf
-ENV fpm_conf /usr/local/etc/php-fpm.d/www.conf
-ENV php_vars /usr/local/etc/php/conf.d/docker-vars.ini
+# =========================
+# 1) BUILDER (compile PHP/PECL extensions)
+# =========================
+FROM php:8.5.3-fpm-alpine AS builder
 
 ENV LUAJIT_LIB=/usr/lib
 ENV LUAJIT_INC=/usr/include/luajit-2.1
 
-# resolves #166
-ENV LD_PRELOAD /usr/lib/preloadable_libiconv.so php
-RUN apk add --no-cache --repository http://dl-3.alpinelinux.org/alpine/edge/community gnu-libiconv
+# iconv workaround (only pull from edge/community)
+ENV LD_PRELOAD=/usr/lib/preloadable_libiconv.so
+RUN apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community gnu-libiconv
 
-
-# INstall nginx + lua and devel kit
-RUN apk add --no-cache nginx \
-    nginx-mod-http-lua \
-    nginx-mod-devel-kit \
-    gcc \
-    g++ \
-    make \
-    cmake \
-    git \
-    docker-cli
-
-RUN addgroup www-data ping
-
-RUN echo @testing https://dl-cdn.alpinelinux.org/alpine/edge/testing >> /etc/apk/repositories && \
-    echo /etc/apk/respositories && \
-    apk update && apk upgrade &&\
-    apk add --no-cache \
-    yarn \
-    bash \
-    openssh-client \
-    wget \
-    supervisor \
-    curl \
-    libcurl \
-    libpq \
-    git \
-    python3 \
-    py3-pip \
-    dialog \
-    autoconf \
-    make \
+# Build deps for PHP extensions + PECL
+RUN apk add --no-cache --virtual .build-deps \
+    $PHPIZE_DEPS \
+    linux-headers \
+    gcc g++ make cmake autoconf pkgconf musl-dev \
+    icu-dev \
     libzip-dev \
     bzip2-dev \
-    icu-dev \
-    tzdata \
+    curl-dev \
     libpng-dev \
     libjpeg-turbo-dev \
     freetype-dev \
     libxslt-dev \
-    gcc
+    libxml2-dev \
+    postgresql-dev \
+    sqlite-dev \
+    tidyhtml-dev
 
-RUN apk add --no-cache --virtual .sys-deps musl-dev linux-headers augeas-dev libmcrypt-dev python3-dev libffi-dev sqlite-dev imap-dev postgresql-dev lua-resty-core
-  # Install PHP modules
-RUN docker-php-ext-configure gd --enable-gd --with-freetype --with-jpeg
-RUN docker-php-ext-install gd
-## Install Tidy
-ENV TIDY_VERSION=5.6.0
-RUN set -x \
-    && mkdir -p /usr/local/src \
-    && cd /usr/local/src \
-    && curl -q https://codeload.github.com/htacg/tidy-html5/tar.gz/$TIDY_VERSION | tar -xz \
-    && cd tidy-html5-$TIDY_VERSION/build/cmake \
-    && cmake ../.. && make install \
-    && ln -s tidybuffio.h ../../../../include/buffio.h \
-    && cd /usr/local/src \
-    && rm -rf /usr/local/src/tidy-html5-$TIDY_VERSION
-RUN docker-php-ext-install -j$(nproc) tidy
-RUN pip install --upgrade pip && \
-    docker-php-ext-install pdo_mysql && \
-    docker-php-ext-install mysqli && \
-    docker-php-ext-install pdo_sqlite && \
-    docker-php-ext-install pgsql && \
-    docker-php-ext-install pdo_pgsql && \
-    docker-php-ext-install exif && \
-    docker-php-ext-install intl && \
-    docker-php-ext-install xsl && \
-    docker-php-ext-install soap && \
-    docker-php-ext-install zip && \
-    pecl install -o -f xdebug && \
-    pecl install -o -f redis && \
-    pecl install -o -f apcu && \
-    docker-php-ext-enable apcu
-RUN docker-php-ext-enable tidy
-RUN echo "extension=redis.so" > /usr/local/etc/php/conf.d/redis.ini && \
-    echo "zend_extension=xdebug" > /usr/local/etc/php/conf.d/xdebug.ini && \
-    docker-php-source delete && \
-    mkdir -p /var/www/app && \
-  # Install composer and certbot
-    mkdir -p /var/log/supervisor && \
-    php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && \
-    php composer-setup.php --quiet --install-dir=/usr/bin --filename=composer && \
-    rm composer-setup.php &&\
-  #  pip3 install -U pip && \
-    pip3 install -U certbot && \
-    mkdir -p /etc/letsencrypt/webrootauth && \
-    apk del gcc musl-dev linux-headers libffi-dev augeas-dev python3-dev make autoconf && \
-    apk del .sys-deps
+# Configure + install PHP core extensions
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+ && docker-php-ext-install -j"$(nproc)" \
+    gd \
+    pdo_mysql mysqli \
+    pdo_sqlite \
+    pgsql pdo_pgsql \
+    exif \
+    intl \
+    xsl \
+    soap \
+    zip \
+    tidy
 
+# PECL extensions
+RUN pecl install -o -f xdebug redis apcu \
+ && docker-php-ext-enable xdebug redis apcu
+
+# Create explicit INI files (so runtime just copies them)
+RUN { echo "extension=redis.so"; } > /usr/local/etc/php/conf.d/redis.ini \
+ && { echo "zend_extension=xdebug"; } > /usr/local/etc/php/conf.d/xdebug.ini \
+ && { echo "extension=apcu.so"; } > /usr/local/etc/php/conf.d/apcu.ini
+
+# Composer (copy into runtime later)
+RUN curl -sS https://getcomposer.org/installer | php -- \
+      --install-dir=/usr/local/bin --filename=composer
+
+# Cleanup build deps
+RUN docker-php-source delete \
+ && apk del --no-network .build-deps
+
+
+# =========================
+# 2) RUNTIME (lean image)
+# =========================
+FROM php:8.5.3-fpm-alpine
+
+LABEL maintainer="Trey Ellis <contact@indydevguy.com>"
+
+ENV php_conf=/usr/local/etc/php-fpm.conf
+ENV fpm_conf=/usr/local/etc/php-fpm.d/www.conf
+ENV php_vars=/usr/local/etc/php/conf.d/docker-vars.ini
+
+ENV LUAJIT_LIB=/usr/lib
+ENV LUAJIT_INC=/usr/include/luajit-2.1
+
+# iconv workaround (same as builder)
+ENV LD_PRELOAD=/usr/lib/preloadable_libiconv.so
+RUN apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community gnu-libiconv
+
+# Runtime packages only (no compilers, no headers)
+RUN apk add --no-cache \
+    nginx \
+    nginx-mod-http-lua \
+    nginx-mod-devel-kit \
+    supervisor \
+    bash \
+    curl \
+    wget \
+    openssh-client \
+    git \
+    docker-cli \
+    tzdata \
+    python3 \
+    py3-pip \
+    dialog \
+    yarn \
+    certbot \
+    lua-resty-core \
+    icu-libs \
+    libzip \
+    libpng \
+    libjpeg-turbo \
+    freetype \
+    libxslt \
+    libxml2 \
+    libpq \
+    sqlite-libs \
+    tidyhtml
+
+# Keep your group tweak
+RUN addgroup www-data ping
+
+# Copy compiled PHP extensions + config from builder
+# (Same PHP version => ABI matches)
+COPY --from=builder /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
+COPY --from=builder /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
+COPY --from=builder /usr/local/bin/composer /usr/local/bin/composer
+
+# Supervisor config
 ADD conf/supervisord.conf /etc/supervisord.conf
 
-# Copy our nginx config
-RUN rm -Rf /etc/nginx/nginx.conf
+# Nginx config
+RUN rm -f /etc/nginx/nginx.conf
 ADD conf/nginx.conf /etc/nginx/nginx.conf
 
-# nginx site conf
-RUN mkdir -p /etc/nginx/sites-available/ && \
-mkdir -p /etc/nginx/sites-enabled/ && \
-mkdir -p /etc/nginx/ssl/ && \
-rm -Rf /var/www/* && \
-mkdir /var/www/html/
+# Nginx site conf
+RUN mkdir -p /etc/nginx/sites-available/ \
+    /etc/nginx/sites-enabled/ \
+    /etc/nginx/ssl/ \
+ && rm -rf /var/www/* \
+ && mkdir -p /var/www/html/
 ADD conf/nginx-site.conf /etc/nginx/sites-available/default.conf
 ADD conf/nginx-site-ssl.conf /etc/nginx/sites-available/default-ssl.conf
-RUN ln -s /etc/nginx/sites-available/default.conf /etc/nginx/sites-enabled/default.conf
+RUN ln -sf /etc/nginx/sites-available/default.conf /etc/nginx/sites-enabled/default.conf
 
-# tweak php-fpm config
-RUN echo "cgi.fix_pathinfo=0" > ${php_vars} &&\
-    echo "upload_max_filesize = 100M"  >> ${php_vars} &&\
-    echo "post_max_size = 100M"  >> ${php_vars} &&\
-    echo "variables_order = \"EGPCS\""  >> ${php_vars} && \
-    echo "memory_limit = 128M"  >> ${php_vars} && \
-    sed -i \
-        -e "s/;catch_workers_output\s*=\s*yes/catch_workers_output = yes/g" \
-        -e "s/pm.max_children = 5/pm.max_children = 4/g" \
-        -e "s/pm.start_servers = 2/pm.start_servers = 3/g" \
-        -e "s/pm.min_spare_servers = 1/pm.min_spare_servers = 2/g" \
-        -e "s/pm.max_spare_servers = 3/pm.max_spare_servers = 4/g" \
-        -e "s/;pm.max_requests = 500/pm.max_requests = 200/g" \
-        -e "s/user = www-data/user = nginx/g" \
-        -e "s/group = www-data/group = nginx/g" \
-        -e "s/;listen.mode = 0660/listen.mode = 0666/g" \
-        -e "s/;listen.owner = www-data/listen.owner = nginx/g" \
-        -e "s/;listen.group = www-data/listen.group = nginx/g" \
-        -e "s/listen = 127.0.0.1:9000/listen = \/var\/run\/php-fpm.sock/g" \
-        -e "s/^;clear_env = no$/clear_env = no/" \
-        ${fpm_conf}
-#    ln -s /etc/php7/php.ini /etc/php7/conf.d/php.ini && \
-RUN cp /usr/local/etc/php/php.ini-development /usr/local/etc/php/php.ini && \
-	sed -i \
-	    -e "s/;opcache/opcache/g" \
-	    -e "s/;zend_extension=opcache/zend_extension=opcache/g" \
-            /usr/local/etc/php/php.ini
+# PHP-FPM + php.ini tweaks
+RUN echo "cgi.fix_pathinfo=0" > ${php_vars} \
+ && echo "upload_max_filesize = 100M"  >> ${php_vars} \
+ && echo "post_max_size = 100M"        >> ${php_vars} \
+ && echo "variables_order = \"EGPCS\"" >> ${php_vars} \
+ && echo "memory_limit = 128M"         >> ${php_vars} \
+ && sed -i \
+    -e "s/;catch_workers_output\\s*=\\s*yes/catch_workers_output = yes/g" \
+    -e "s/pm.max_children = 5/pm.max_children = 4/g" \
+    -e "s/pm.start_servers = 2/pm.start_servers = 3/g" \
+    -e "s/pm.min_spare_servers = 1/pm.min_spare_servers = 2/g" \
+    -e "s/pm.max_spare_servers = 3/pm.max_spare_servers = 4/g" \
+    -e "s/;pm.max_requests = 500/pm.max_requests = 200/g" \
+    -e "s/user = www-data/user = nginx/g" \
+    -e "s/group = www-data/group = nginx/g" \
+    -e "s/;listen.mode = 0660/listen.mode = 0666/g" \
+    -e "s/;listen.owner = www-data/listen.owner = nginx/g" \
+    -e "s/;listen.group = www-data/listen.group = nginx/g" \
+    -e "s|listen = 127.0.0.1:9000|listen = /var/run/php-fpm.sock|g" \
+    -e "s/^;clear_env = no$/clear_env = no/" \
+    ${fpm_conf} \
+ && cp /usr/local/etc/php/php.ini-development /usr/local/etc/php/php.ini \
+ && sed -i -e "s/;opcache/opcache/g" /usr/local/etc/php/php.ini
 
-
-# Add Scripts
+# Scripts
 ADD scripts/start.sh /start.sh
 ADD scripts/pull /usr/bin/pull
 ADD scripts/push /usr/bin/push
 ADD scripts/letsencrypt-setup /usr/bin/letsencrypt-setup
 ADD scripts/letsencrypt-renew /usr/bin/letsencrypt-renew
-RUN chmod 755 /usr/bin/pull && chmod 755 /usr/bin/push && chmod 755 /usr/bin/letsencrypt-setup && chmod 755 /usr/bin/letsencrypt-renew && chmod 755 /start.sh
+RUN chmod 755 /usr/bin/pull /usr/bin/push /usr/bin/letsencrypt-setup /usr/bin/letsencrypt-renew /start.sh
 
-# copy in code
+# App code
 ADD src/ /var/www/html/
 ADD errors/ /var/www/errors
 
-
 EXPOSE 443 80
-
 WORKDIR "/var/www/html"
 CMD ["/start.sh"]
