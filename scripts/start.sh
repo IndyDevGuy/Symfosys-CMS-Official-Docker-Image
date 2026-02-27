@@ -220,6 +220,9 @@ else
 
   cd /var/www/html/src || return
 
+  echo "Setting cache files permissions"
+  chmod -R 777 /var/www/html/src/var
+
   echo "Updating database..."
   php bin/console doctrine:schema:update --force
 
